@@ -1,4 +1,4 @@
-#Licence
+# Licence
 bohrnum.dtx
 Copyright 2008 Isac D. Hausmann
 
