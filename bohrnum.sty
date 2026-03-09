@@ -24,7 +24,7 @@
 
 % keys
 \pgfkeys{
-    /bohr/.is family, /bohr,                % Declare a family
+    /bohrnum/.is family, /bohrnum,                % Declare a family
     %
     disp name/.is if = DispName,            % Loads ifDispName as an option
     disp name/.initial = false,             % Sets default value to false
@@ -51,13 +51,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Convenience: global setter
-\newcommand*\bohrset[1]{\pgfkeys{/bohr,#1}}
+\newcommand*\bohrset[1]{\pgfkeys{/bohrnum,#1}}
 
-% This allows \usepackage[dis=3,outer only=false]{bohr}
+% This allows \usepackage[dis=3,outer only=false]{bohrnum}
 \DeclareOption*{%
   % \CurrentOption holds the literal token list after the comma.
   % We accept both "key=value" and "key" booleans (pgfkeys can parse).
-  \expandafter\pgfkeys\expandafter{/bohr/\CurrentOption}%
+  \expandafter\pgfkeys\expandafter{/bohrnum/\CurrentOption}%
 }
 \ProcessOptions\relax
 
@@ -187,10 +187,10 @@
 \NewDocumentCommand{\PlaceElectrons}{ O{} m m m}{%
 
     % Load defaults then overlay user overrides
-    \pgfkeys{/bohr,#1}%
-    \edef\BohrOffset{\pgfkeysvalueof{/bohr/offset}}%
-    \edef\BohrEColor{\pgfkeysvalueof{/bohr/electron color}}%
-    \edef\BohrEScale{\pgfkeysvalueof{/bohr/electron scale}}%
+    \pgfkeys{/bohrnum,#1}%
+    \edef\BohrOffset{\pgfkeysvalueof{/bohrnum/offset}}%
+    \edef\BohrEColor{\pgfkeysvalueof{/bohrnum/electron color}}%
+    \edef\BohrEScale{\pgfkeysvalueof{/bohrnum/electron scale}}%
     
   % Sanitize the count to a pure integer (strips spaces etc.)
   \pgfmathtruncatemacro{\nInt}{#4}%
@@ -237,16 +237,16 @@
   \ifnum\NSeven>0 \Nshells=7 \fi
 
   % Beginning values
-  \pgfkeys{/bohr,#1}%
-  \edef\BohrDis{\pgfkeysvalueof{/bohr/dis}}%
-  \edef\BohrOffset{\pgfkeysvalueof{/bohr/offset}}%
-  \edef\BohrScale{\pgfkeysvalueof{/bohr/scale}}%
-  \edef\BohrEmpty{\pgfkeysvalueof{/bohr/empty color}}%
-  \edef\BohrFilled{\pgfkeysvalueof{/bohr/filled color}}%
-  \edef\NumShells{\pgfkeysvalueof{/bohr/number of shells}}%
-  \pgfkeysgetvalue{/bohr/font}\BohrFont%
-  \edef\BohrGColor{\pgfkeysvalueof{/bohr/empty color}}%
-  \edef\BohrFColor{\pgfkeysvalueof{/bohr/filled color}}%
+  \pgfkeys{/bohrnum,#1}%
+  \edef\BohrDis{\pgfkeysvalueof{/bohrnum/dis}}%
+  \edef\BohrOffset{\pgfkeysvalueof{/bohrnum/offset}}%
+  \edef\BohrScale{\pgfkeysvalueof{/bohrnum/scale}}%
+  \edef\BohrEmpty{\pgfkeysvalueof{/bohrnum/empty color}}%
+  \edef\BohrFilled{\pgfkeysvalueof{/bohrnum/filled color}}%
+  \edef\NumShells{\pgfkeysvalueof{/bohrnum/number of shells}}%
+  \pgfkeysgetvalue{/bohrnum/font}\BohrFont%
+  \edef\BohrGColor{\pgfkeysvalueof{/bohrnum/empty color}}%
+  \edef\BohrFColor{\pgfkeysvalueof{/bohrnum/filled color}}%
 
   \begin{scope}[scale = \BohrScale]
     % Label: use element symbol from PeriodicList, or #2 depending on option
@@ -287,13 +287,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Place atom
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\NewDocumentCommand{\Bohr}{ O{} m }{%
+\NewDocumentCommand{\Bohrnum}{ O{} m }{%
   % Load defaults then overlay user overrides
-  \pgfkeys{/bohr, #1}%
-  \edef\BohrXShift{\pgfkeysvalueof{/bohr/xshift}}%
-  \edef\BohrYShift{\pgfkeysvalueof{/bohr/yshift}}%
-  \edef\BohrCorner{\pgfkeysvalueof{/bohr/corner}}%
-  \edef\BohrRScale{\pgfkeysvalueof{/bohr/rscale}}%
+  \pgfkeys{/bohrnum, #1}%
+  \edef\BohrXShift{\pgfkeysvalueof{/bohrnum/xshift}}%
+  \edef\BohrYShift{\pgfkeysvalueof{/bohrnum/yshift}}%
+  \edef\BohrCorner{\pgfkeysvalueof{/bohrnum/corner}}%
+  \edef\BohrRScale{\pgfkeysvalueof{/bohrnum/rscale}}%
 
   \smash{
   \begin{tikzpicture}[remember picture,overlay]
@@ -318,5 +318,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \pagestyle{empty}
 \AddEverypageHook{
-\Bohr{\thepage}
+\Bohrnum{\thepage}
 }
