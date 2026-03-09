@@ -1,0 +1,322 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bohrnum}[2026/03/08 v0.1 Bohr numbering with Aufbau exceptions]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Required packages
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\RequirePackage{tikz}
+\usetikzlibrary{calc}
+\RequirePackage{calc}
+\RequirePackage{xparse}
+\RequirePackage{everypage-1x}
+\RequirePackage{lipsum}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Plain-TeX registers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% counts
+\newcount\Z \newcount\rem \newcount\take \newcount\level \newcount\capacity
+\newcount\NOne \newcount\NTwo \newcount\NThree \newcount\NFour \newcount\NFive \newcount\NSix \newcount\NSeven \newcount\Nshells 
+
+% if statements
+\newif\ifDispName \newif\ifBohrAppendix
+
+% keys
+\pgfkeys{
+    /bohr/.is family, /bohr,                % Declare a family
+    %
+    disp name/.is if = DispName,            % Loads ifDispName as an option
+    disp name/.initial = false,             % Sets default value to false
+    appendix/.is if = BohrAppendix,         % Loads ifBohrAppendix as an option
+    appendix/.initial = false,              % Sets default value to false
+    %
+    number of shells/.initial = 0,          % Sets the default number of visible empty shells
+    xshift/.initial = -.6in,                % The offset from the right edge
+    yshift/.initial = .6in,                 % The offset from the bottom edge
+    electron scale/.initial = 1,            % Color of electrons
+    rscale/.initial = 0.6,                  % Changes the scale distance of rings and electrons
+    scale/.initial = 1,                     % Scales the entire atom
+    corner/.initial = south east,           % Position
+    dis/.initial = 3,                       % Distance between rings
+    offset/.initial = 0.3,                  % Offset from center
+    empty color/.initial = lightgray,       % Color of empty rings
+    filled color/.initial = black,          % Color of filled rings
+    electron color/.initial = black,        % Color of electrons
+    font/.initial = \scriptsize\bfseries    % The font used in the atom numbering
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Package options
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Convenience: global setter
+\newcommand*\bohrset[1]{\pgfkeys{/bohr,#1}}
+
+% This allows \usepackage[dis=3,outer only=false]{bohr}
+\DeclareOption*{%
+  % \CurrentOption holds the literal token list after the comma.
+  % We accept both "key=value" and "key" booleans (pgfkeys can parse).
+  \expandafter\pgfkeys\expandafter{/bohr/\CurrentOption}%
+}
+\ProcessOptions\relax
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Helpers for shell edits
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcount\TMPA
+
+% \ShellAdvance{<n>}{<k>}  -- add k to shell n (k can be negative)
+\def\ShellAdvance#1#2{%
+  \TMPA=#2\relax
+  \ifcase#1\relax
+    % 0: do nothing
+  \or \advance\NOne   by \TMPA
+  \or \advance\NTwo   by \TMPA
+  \or \advance\NThree by \TMPA
+  \or \advance\NFour  by \TMPA
+  \or \advance\NFive  by \TMPA
+  \or \advance\NSix   by \TMPA
+  \or \advance\NSeven by \TMPA
+  \fi
+}
+
+% \MoveElectrons{<from n>}{<to n>}{<k>}  -- move k electrons between shells
+\def\MoveElectrons#1#2#3{%
+  \TMPA=#3\relax
+  \multiply\TMPA by -1
+  \ShellAdvance{#1}{\TMPA}% remove from 'from'
+  \TMPA=#3\relax
+  \ShellAdvance{#2}{\TMPA}% add to 'to'
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Apply exceptions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\ApplyAufbauExceptions}{%
+  % Uses \Z (atomic number) and the already-filled shell counts
+  % 3d/4s anomalies
+  \ifnum\Z=24 \MoveElectrons{4}{3}{1}\fi  % Cr
+  \ifnum\Z=29 \MoveElectrons{4}{3}{1}\fi  % Cu
+  % 4d/5s anomalies
+  \ifnum\Z=41 \MoveElectrons{5}{4}{1}\fi  % Nb
+  \ifnum\Z=42 \MoveElectrons{5}{4}{1}\fi  % Mo
+  \ifnum\Z=44 \MoveElectrons{5}{4}{1}\fi  % Ru
+  \ifnum\Z=45 \MoveElectrons{5}{4}{1}\fi  % Rh
+  \ifnum\Z=46 \MoveElectrons{5}{4}{2}\fi  % Pd
+  \ifnum\Z=47 \MoveElectrons{5}{4}{1}\fi  % Ag
+  % 5d/6s anomalies
+  \ifnum\Z=78 \MoveElectrons{6}{5}{1}\fi  % Pt
+  \ifnum\Z=79 \MoveElectrons{6}{5}{1}\fi  % Au
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Aufbau subshell order (no letters, just n / capacity)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\AufbauList{% level/capacity
+  1/2, 
+  2/2, 
+  2/6, 
+  3/2, 
+  3/6, 
+  4/2,
+  3/10, 
+  4/6, 
+  5/2, 
+  4/10, 
+  5/6, 
+  6/2,
+  4/14, 
+  5/10, 
+  6/6, 
+  7/2, 
+  5/14, 
+  6/10,
+  7/6%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Element names as a PGF math string-array literal
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Extra braces make it a single PGF math expression.
+\def\PeriodicList{{"H","He","Li","Be","B","C","N","O","F","Ne",
+"Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca","Sc","Ti","V","Cr","Mn","Fe",
+"Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr","Rb","Sr","Y","Zr","Nb",
+"Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba",
+"La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
+"Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn",
+"Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md",
+"No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Cn","Nh","Fl","Mc","Lv",
+"Ts","Og"}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Fill electrons by Aufbau --> shell counts N1..N7
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\AufbauFill}[1]{%
+  \Z=#1\relax
+  \rem=\Z
+  \NOne=0 \NTwo=0 \NThree=0 \NFour=0 \NFive=0 \NSix=0 \NSeven=0
+  \foreach \lvl/\cap in \AufbauList {%
+    \level=\lvl\relax
+    \capacity=\cap\relax
+    \ifnum\rem>0
+      \ifnum\rem<\capacity \take=\rem \else \take=\capacity \fi
+      \global\advance\rem by -\take
+      \ifnum\level=1 \global\advance\NOne by \take\fi
+      \ifnum\level=2 \global\advance\NTwo by \take\fi
+      \ifnum\level=3 \global\advance\NThree by \take\fi
+      \ifnum\level=4 \global\advance\NFour by \take\fi
+      \ifnum\level=5 \global\advance\NFive by \take\fi
+      \ifnum\level=6 \global\advance\NSix by \take\fi
+      \ifnum\level=7 \global\advance\NSeven by \take\fi
+    \fi
+  }%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Place n points evenly on a circle (unitless radius)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Places #5 electrons equally spaced on a circle
+% Args:
+%   #1 = starting angle (degrees)
+%   #2 = radius
+%   #3 = electron count (can be a macro like \NThree)
+\NewDocumentCommand{\PlaceElectrons}{ O{} m m m}{%
+
+    % Load defaults then overlay user overrides
+    \pgfkeys{/bohr,#1}%
+    \edef\BohrOffset{\pgfkeysvalueof{/bohr/offset}}%
+    \edef\BohrEColor{\pgfkeysvalueof{/bohr/electron color}}%
+    \edef\BohrEScale{\pgfkeysvalueof{/bohr/electron scale}}%
+    
+  % Sanitize the count to a pure integer (strips spaces etc.)
+  \pgfmathtruncatemacro{\nInt}{#4}%
+  \ifnum\nInt>0
+    % Step size in degrees (pgfmath is fine with /)
+    \pgfmathsetmacro{\step}{360/\nInt}%
+    \pgfmathparse{0.07*\BohrEScale}
+    \let\dotr\pgfmathresult
+    % Place nInt dots around the circle
+    \foreach \k in {0,...,\numexpr\nInt-1\relax}{%
+      \pgfmathsetmacro{\ang}{#2 + \k*\step}%
+      % Using TikZ calc for polar placement
+      \pgfmathsetmacro{\r}{#3+\BohrOffset}
+      \fill[\BohrEColor] ($(0,0)+({\r*cos(\ang)},{\r*sin(\ang)})$) circle (\dotr);
+    }%
+  \fi
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Draw one atom with Aufbau filling
+%    \BohrAtom{Z}{rstep}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\NewDocumentCommand{\BohrAtom}{O{} m m}{%
+  % #1 = Z (atomic number)
+  % #2 = label to show (element symbol or number)
+  % #3 = base radius multiplier
+
+  % Fill shells according to Aufbau (baseline)
+  \AufbauFill{\value{page}}%
+  % Store Z for exceptions macro
+  \Z=\value{page}\relax
+  % Apply known exceptions (neutral atoms)
+  \ApplyAufbauExceptions
+
+  % Determine number of non-empty shells (n=1..7)
+  \Nshells=0
+  \ifnum\NOne>0   \Nshells=1 \fi
+  \ifnum\NTwo>0   \Nshells=2 \fi
+  \ifnum\NThree>0 \Nshells=3 \fi
+  \ifnum\NFour>0  \Nshells=4 \fi
+  \ifnum\NFive>0  \Nshells=5 \fi
+  \ifnum\NSix>0   \Nshells=6 \fi
+  \ifnum\NSeven>0 \Nshells=7 \fi
+
+  % Beginning values
+  \pgfkeys{/bohr,#1}%
+  \edef\BohrDis{\pgfkeysvalueof{/bohr/dis}}%
+  \edef\BohrOffset{\pgfkeysvalueof{/bohr/offset}}%
+  \edef\BohrScale{\pgfkeysvalueof{/bohr/scale}}%
+  \edef\BohrEmpty{\pgfkeysvalueof{/bohr/empty color}}%
+  \edef\BohrFilled{\pgfkeysvalueof{/bohr/filled color}}%
+  \edef\NumShells{\pgfkeysvalueof{/bohr/number of shells}}%
+  \pgfkeysgetvalue{/bohr/font}\BohrFont%
+  \edef\BohrGColor{\pgfkeysvalueof{/bohr/empty color}}%
+  \edef\BohrFColor{\pgfkeysvalueof{/bohr/filled color}}%
+
+  \begin{scope}[scale = \BohrScale]
+    % Label: use element symbol from PeriodicList, or #2 depending on option
+    \pgfmathparse{\PeriodicList[\value{page}-1]}
+    \let\Picked\pgfmathresult
+    \node[
+      font=\BohrFont,
+      anchor=center,
+      inner sep=0pt,
+      outer sep=0pt,
+    ] at (0,0) {%
+      \ifDispName \Picked \else #2 \fi
+    };
+
+    % Empty rings (optional background)
+    \ifnum\NumShells>0
+      \foreach \i in {1,...,\NumShells}{%
+        \draw[\BohrGColor, line width=1.2pt] (0,0) circle[radius=\i*#3/\BohrDis+\BohrOffset];
+      }%
+    \fi
+
+    % Filled rings
+    \foreach \i in {1,...,\Nshells}{%
+      \draw[\BohrFColor, line width=1.2pt] (0,0) circle[radius=\i*#3/\BohrDis+\BohrOffset];
+    }%
+
+    % Place electrons per shell
+    \PlaceElectrons{ 90}{1*#3/\BohrDis}{\NOne}
+    \PlaceElectrons{ 90}{2*#3/\BohrDis}{\NTwo}
+    \PlaceElectrons{ 90}{3*#3/\BohrDis}{\NThree}
+    \PlaceElectrons{ 90}{4*#3/\BohrDis}{\NFour}
+    \PlaceElectrons{ 90}{5*#3/\BohrDis}{\NFive}
+    \PlaceElectrons{ 90}{6*#3/\BohrDis}{\NSix}
+    \PlaceElectrons{ 90}{7*#3/\BohrDis}{\NSeven}
+  \end{scope}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Place atom
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\NewDocumentCommand{\Bohr}{ O{} m }{%
+  % Load defaults then overlay user overrides
+  \pgfkeys{/bohr, #1}%
+  \edef\BohrXShift{\pgfkeysvalueof{/bohr/xshift}}%
+  \edef\BohrYShift{\pgfkeysvalueof{/bohr/yshift}}%
+  \edef\BohrCorner{\pgfkeysvalueof{/bohr/corner}}%
+  \edef\BohrRScale{\pgfkeysvalueof{/bohr/rscale}}%
+
+  \smash{
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[
+      anchor=center,
+      inner sep=0pt,
+      outer sep=0pt
+    ] at ([
+      xshift=\BohrXShift,
+      yshift=\BohrYShift]current page.\BohrCorner) {%
+      \begin{tikzpicture}[inner sep=0pt, outer sep=0pt]
+        \BohrAtom{#2}{\BohrRScale}%
+      \end{tikzpicture}%
+    };
+  \end{tikzpicture}%
+}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Add to every page
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagestyle{empty}
+\AddEverypageHook{
+\Bohr{\thepage}
+}
