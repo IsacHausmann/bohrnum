@@ -17,6 +17,11 @@ The Current Maintainer of this work is Isac D. Hausmann.
 This work consists of the files bohrnum.dtx and bohrnum.ins
 and the derived file bohrnum.sty.
 
+# Disclaimer
+This package is in no way intended to replace nor infringe on 
+the already existing bohr which much more comprehensively allows
+for deliberate design choices and rendering of the bohr-atomic modell
+
 # bohrnum
 `bohrnum` is a TikZ-based LaTeX package creating alternative numbering 
 for documents based on the bohr atomic model following the aufbau 
@@ -28,11 +33,6 @@ Features include:
 - Customizable ring spacing, electron color, label, position
 - Works in pdfLaTeX, XeLaTeX, and LuaLaTeX
     - Uses LaTeX2e
- 
-# Disclaimer
-This package is in no way intended to replace nor infringe on 
-the already existing bohr which much more comprehensively allows
-for deliberate design choices and rendering of the bohr-atomic modell
 
 ## Installation
 
