@@ -18,9 +18,9 @@ This work consists of the files bohrnum.dtx and bohrnum.ins
 and the derived file bohrnum.sty.
 
 # Disclaimer
-This package is in no way intended to replace nor infringe on 
-the already existing bohr which much more comprehensively allows
-for deliberate design choices and rendering of the bohr-atomic modell
+This package is not intended to replace, compete with, or infringe upon the already existing bohr package on CTAN.
+The purposes of the two packages differ: bohrnum provides page numbering using Bohr‑model style electron shells, while bohr offers a comprehensive tool for drawing and designing Bohr atomic models.
+Users seeking detailed atomic diagrams should refer to the original bohr package.
 
 # bohrnum
 `bohrnum` is a TikZ-based LaTeX package creating alternative numbering 
